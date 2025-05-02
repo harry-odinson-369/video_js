@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:video_js/src/constants/web_const.dart';
+import 'package:video_js/src/extensions/video.dart';
 import 'package:video_js/src/models/options.dart';
 import 'package:video_js/src/models/source.dart';
 import 'package:video_js/src/utils/generate.dart';
@@ -25,6 +26,7 @@ class VideoJSController extends ValueNotifier<VideoJSValue> {
 
   VideoJSController.network(String url, {PlayerOptions? options})
     : _sourceType = SourceType.network,
+      _controller = WebConstants.defaultWebViewController,
       super(VideoJSValue()) {
     this.options = options ?? PlayerOptions.defaultOptions();
     this.options.src = url;
@@ -32,6 +34,7 @@ class VideoJSController extends ValueNotifier<VideoJSValue> {
 
   VideoJSController.file(String path, {PlayerOptions? options})
     : _sourceType = SourceType.file,
+      _controller = WebConstants.defaultWebViewController,
       super(VideoJSValue()) {
     this.options = options ?? PlayerOptions.defaultOptions();
     this.options.src = path;
@@ -39,6 +42,7 @@ class VideoJSController extends ValueNotifier<VideoJSValue> {
 
   VideoJSController.asset(String asset, {PlayerOptions? options})
     : _sourceType = SourceType.asset,
+      _controller = WebConstants.defaultWebViewController,
       super(VideoJSValue()) {
     this.options = options ?? PlayerOptions.defaultOptions();
     this.options.src = asset;
@@ -79,7 +83,6 @@ class VideoJSController extends ValueNotifier<VideoJSValue> {
     String props = _getProps();
     final uri = Uri.parse("${_server!.url}/?props=$props");
     VideoJSLogger.logger?.call("Initializing with url: ${uri.toString()}");
-    _controller ??= WebConstants.defaultWebViewController;
     await _controller?.loadRequest(uri);
     await TimerUtils.waitFor(() => value.isInitialized);
   }
@@ -90,7 +93,6 @@ class VideoJSController extends ValueNotifier<VideoJSValue> {
     SourceType? source,
     PlayerOptions? options,
   }) async {
-    _controller ??= WebConstants.defaultWebViewController;
     _controller?.loadHtmlString(WebConstants.blankedHtml);
     if (options != null) this.options = options;
     this.options.src = src;
@@ -144,6 +146,13 @@ class VideoJSController extends ValueNotifier<VideoJSValue> {
   Future setLoop(bool isLoop) {
     value = value.copyWith(isLoop: isLoop);
     return _sendMessage({"action": "loop", "allow": isLoop});
+  }
+
+  void setView(VideoJSView view) {
+    value = value.copyWith(view: view);
+    _controller?.runJavaScript(
+      'document.querySelector("video").style.objectFit = "${view.toCssObjectFit}"',
+    );
   }
 
   void _valueListener(dynamic data) {

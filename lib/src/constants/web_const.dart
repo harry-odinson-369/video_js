@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
@@ -45,17 +46,21 @@ class WebConstants {
               ),
             )..setMediaPlaybackRequiresUserGesture(false),
           ))
-      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.black);
   }
 
-  static PlatformWebViewWidgetCreationParams defaultWebViewWidgetParams(
-    WebViewController controller,
-  ) {
-    return Platform.isIOS
-        ? WebKitWebViewWidgetCreationParams(controller: controller.platform)
-        : AndroidWebViewWidgetCreationParams(
-          controller: controller.platform,
-          displayWithHybridComposition: true,
-        );
+  static WebViewWidget view(WebViewController controller) {
+    return WebViewWidget.fromPlatformCreationParams(
+      params:
+          Platform.isIOS
+              ? WebKitWebViewWidgetCreationParams(
+                controller: controller.platform,
+              )
+              : AndroidWebViewWidgetCreationParams(
+                controller: controller.platform,
+                displayWithHybridComposition: true,
+              ),
+    );
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:webview_flutter/webview_flutter.dart';
+
 enum VideoJSState {
   idle,
   initializing,
@@ -10,6 +12,8 @@ enum VideoJSState {
   ended,
   error,
 }
+
+enum VideoJSView { fit, crop, stretch }
 
 class DurationRange {
   final Duration start;
@@ -40,6 +44,7 @@ class VideoJSValue {
   bool isInitialized = false;
   double volume = 0;
   double speed = 0;
+  VideoJSView view = VideoJSView.fit;
   String? error;
 
   double get aspectRatio {
@@ -68,6 +73,7 @@ class VideoJSValue {
     this.isLoop = false,
     this.volume = 0.0,
     this.speed = 1.0,
+    this.view = VideoJSView.fit,
     this.error,
   });
 
@@ -81,7 +87,9 @@ class VideoJSValue {
     bool? isLoop,
     double? volume,
     double? speed,
+    VideoJSView? view,
     String? error,
+    WebViewController? browser,
   }) => VideoJSValue(
     size: size ?? this.size,
     current: current ?? this.current,
@@ -92,6 +100,7 @@ class VideoJSValue {
     isLoop: isLoop ?? this.isLoop,
     volume: volume ?? this.volume,
     speed: speed ?? this.speed,
+    view: view ?? this.view,
     error: error ?? this.error,
   );
 
@@ -116,6 +125,9 @@ class VideoJSValue {
     isLoop: map["loop"] ?? false,
     volume: double.parse((map["volume"] ?? 0).toString()),
     speed: double.parse((map["speed"] ?? 0).toString()),
+    view: VideoJSView.values.firstWhere(
+      (e) => e.name == (map["view"] ?? "fit"),
+    ),
     error: map["error"],
   );
 
@@ -130,6 +142,7 @@ class VideoJSValue {
       "loop": isLoop,
       "volume": volume,
       "speed": speed,
+      "view": view.name,
       "error": error,
     };
 
@@ -155,6 +168,7 @@ class VideoJSValue {
       isLoop.hashCode ^
       volume.hashCode ^
       speed.hashCode ^
+      view.hashCode ^
       error.hashCode;
 
   @override
@@ -170,6 +184,7 @@ class VideoJSValue {
         isLoop == other.isLoop &&
         volume == other.volume &&
         speed == other.speed &&
+        view == other.view &&
         error == other.error;
   }
 }

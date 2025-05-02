@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:video_js/src/extensions/video_type.dart';
+import 'package:video_js/src/extensions/video.dart';
 import 'package:video_js/src/models/source.dart';
 
 enum VideoType { mp4, m3u8, webm, mkv, avi, mov, flv, unset }
