@@ -1,6 +1,6 @@
 name: video_js
 description: "A video player package based on video.js package that work at javascript/html side."
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/harry-odinson-369/video_js
 
 environment:

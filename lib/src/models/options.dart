@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:video_js/src/extensions/video.dart';
 import 'package:video_js/src/models/source.dart';
 
-enum VideoType { mp4, m3u8, webm, mkv, avi, mov, flv, unset }
+enum VideoJSType { mp4, m3u8, webm, mkv, avi, mov, flv, unset }
 
-class PlayerOptions {
+class VideoJSOptions {
 
   static const String _transparent = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 
@@ -19,31 +19,31 @@ class PlayerOptions {
   String? poster;
 
   /// The [content-type] of the source url.
-  VideoType? type;
+  VideoJSType? type;
 
   /// Set the request [headers] to the source [src] if needed. it work on [SourceType.network] only.
   Map<String, String>? headers;
 
-  PlayerOptions({
+  VideoJSOptions({
     this.autoPlay,
     this.poster,
     this.type,
     this.headers,
   });
 
-  factory PlayerOptions.defaultOptions() => PlayerOptions(
+  factory VideoJSOptions.defaultOptions() => VideoJSOptions(
     autoPlay: false,
     headers: null,
-    type: VideoType.unset,
+    type: null,
     poster: null,
   );
 
-  PlayerOptions copyWith({
+  VideoJSOptions copyWith({
     bool? autoPlay,
     String? poster,
-    VideoType? type,
+    VideoJSType? type,
     Map<String, String>? headers,
-  }) => PlayerOptions(
+  }) => VideoJSOptions(
     autoPlay: autoPlay ?? this.autoPlay,
     poster: poster ?? this.poster,
     type: type ?? this.type,
@@ -53,7 +53,7 @@ class PlayerOptions {
   String get encodedProps {
     final map = {
       "src": src,
-      "poster": poster ?? PlayerOptions._transparent,
+      "poster": poster ?? VideoJSOptions._transparent,
       "autoplay": autoPlay,
       "type": type?.toMimeType,
     };

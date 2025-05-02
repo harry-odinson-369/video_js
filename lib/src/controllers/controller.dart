@@ -8,6 +8,7 @@ import 'package:video_js/src/models/options.dart';
 import 'package:video_js/src/models/source.dart';
 import 'package:video_js/src/utils/generate.dart';
 import 'package:video_js/src/utils/log.dart';
+import 'package:video_js/src/utils/mime.dart';
 import 'package:video_js/src/utils/server.dart';
 import 'package:video_js/src/utils/timer.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -15,7 +16,9 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../models/value.dart';
 
 class VideoJSController extends ValueNotifier<VideoJSValue> {
-  PlayerOptions options = PlayerOptions();
+  VideoJSOptions options = VideoJSOptions();
+
+  String _baseSrc = "";
 
   SourceType _sourceType;
 
@@ -24,29 +27,37 @@ class VideoJSController extends ValueNotifier<VideoJSValue> {
   WebViewController? _controller;
   WebViewController? get controller => _controller;
 
-  VideoJSController.network(String url, {PlayerOptions? options})
+  VideoJSController.network(String url, {VideoJSOptions? options})
     : _sourceType = SourceType.network,
       _controller = WebConstants.defaultWebViewController,
       super(VideoJSValue()) {
-    this.options = options ?? PlayerOptions.defaultOptions();
+    this.options = options ?? VideoJSOptions.defaultOptions();
     this.options.src = url;
+    _baseSrc = url;
   }
 
-  VideoJSController.file(String path, {PlayerOptions? options})
+  VideoJSController.file(String path, {VideoJSOptions? options})
     : _sourceType = SourceType.file,
       _controller = WebConstants.defaultWebViewController,
       super(VideoJSValue()) {
-    this.options = options ?? PlayerOptions.defaultOptions();
+    this.options = options ?? VideoJSOptions.defaultOptions();
     this.options.src = path;
+    _baseSrc = path;
   }
 
-  VideoJSController.asset(String asset, {PlayerOptions? options})
+  VideoJSController.asset(String asset, {VideoJSOptions? options})
     : _sourceType = SourceType.asset,
       _controller = WebConstants.defaultWebViewController,
       super(VideoJSValue()) {
-    this.options = options ?? PlayerOptions.defaultOptions();
+    this.options = options ?? VideoJSOptions.defaultOptions();
     this.options.src = asset;
+    _baseSrc = asset;
   }
+
+  VideoJSController.idle()
+    : _sourceType = SourceType.network,
+      _controller = WebConstants.defaultWebViewController,
+      super(VideoJSValue(state: VideoJSState.idle));
 
   void setLog(void Function(dynamic data)? log) {
     VideoJSLogger.logger = log;
@@ -78,11 +89,18 @@ class VideoJSController extends ValueNotifier<VideoJSValue> {
   }
 
   Future initialize() async {
+    assert(
+      !(_baseSrc.isEmpty && value.state == VideoJSState.idle),
+      "VideoJSController is in idle mode. please call 'change' function instead.",
+    );
     value = value.copyWith(state: VideoJSState.initializing);
     await _serveIfNot();
+    options.type ??= await MimeUtils.findType(_baseSrc, options.headers);
     String props = _getProps();
     final uri = Uri.parse("${_server!.url}/?props=$props");
-    VideoJSLogger.logger?.call("Initializing with url: ${uri.toString()}");
+    VideoJSLogger.logger?.call(
+      "Initializing type ${options.type?.name} from ${_sourceType.name} with src ${options.src}.",
+    );
     await _controller?.loadRequest(uri);
     await TimerUtils.waitFor(() => value.isInitialized);
   }
@@ -91,17 +109,24 @@ class VideoJSController extends ValueNotifier<VideoJSValue> {
   Future change(
     String src, {
     SourceType? source,
-    PlayerOptions? options,
+    VideoJSOptions? options,
   }) async {
+    _baseSrc = src;
     _controller?.loadHtmlString(WebConstants.blankedHtml);
     if (options != null) this.options = options;
     this.options.src = src;
     if (source != null) _sourceType = source;
     value = VideoJSValue(state: VideoJSState.initializing);
     await _serveIfNot();
+    this.options.type ??= await MimeUtils.findType(
+      _baseSrc,
+      this.options.headers,
+    );
     String props = _getProps();
     final uri = Uri.parse("${_server!.url}/?props=$props");
-    VideoJSLogger.logger?.call("Change to url: ${uri.toString()}");
+    VideoJSLogger.logger?.call(
+      "Change to type ${this.options.type?.name} from ${_sourceType.name} with src ${this.options.src}.",
+    );
     _controller?.loadRequest(uri);
     await TimerUtils.waitFor(() => value.isInitialized);
   }

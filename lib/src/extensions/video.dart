@@ -3,7 +3,7 @@ import 'package:mime/mime.dart' as mime;
 import 'package:video_js/src/models/value.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-extension VideoTypeExtension on VideoType {
+extension VideoTypeExtension on VideoJSType {
   String? get toMimeType => mime.lookupMimeType("test.$name");
 }
 
